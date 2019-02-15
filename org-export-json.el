@@ -47,7 +47,14 @@
 (setq org-json-property-types-plist
 	`(
 		all (
-			:parent skip)
+			:parent skip
+			:begin skip
+			:end skip
+			:contents-begin skip
+			:contents-end skip
+			:post-affiliated skip
+			:pre-blank skip
+			:post-blank skip)
 		entity (
 			:latex-math-p bool
 			:use-brackets-p bool)
