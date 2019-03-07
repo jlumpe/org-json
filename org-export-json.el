@@ -133,9 +133,16 @@
 		))
 
 
-(defun org-json--make-error (message)
+(defun org-json--make-error (message &rest objects)
 	"Make a JSON object with an error message"
-	`((_error . ,message)))
+	(let ((formatted (eval `(format ,message ,@objects))))
+		`((_error . ,formatted))))
+
+(defun org-json--maybe-error (strict message &rest objects)
+	"Throw an actual error if strict is non-nil, else return a JSON error object."
+	(if strict
+		(eval `(error ,message ,@objects))
+		(eval `(org-json--make-error ,message ,@objects))))
 
 
 (defun org-json--list-elem-properties (elem)
@@ -180,7 +187,7 @@
 		propvals))
 
 
-(defun org-json-format-generic (value)
+(defun org-json-format-generic (value &optional strict)
 	"Format a generic value for JSON output."
 	(cond
 		;; Pass "booleans" (t + nil), numbers, symbols through
@@ -193,7 +200,7 @@
 		((org-element-type value)
 			(org-json-format-element value))
 		; Unknown
-		(t (org-json--make-error "Couldn't encode value"))))
+		(t (org-json--maybe-error strict "Couldn't automatically encode value of type %s" (type-of value)))))
 
 
 (defun org-json-format-list-generic (value)
