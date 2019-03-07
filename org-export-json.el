@@ -45,6 +45,21 @@
 	"
 	(if value t :json-false))
 
+(defun org-json-format-string (value)
+	"Convert a string value into a value to be passed to json-encode.
+
+	If value is a string, strip properties (don't know if that matters for JSON
+	encoding, but definitely for making printed value legible) and return. If nil
+	return nil. Otherwise throw an error.
+	"
+	(cond
+		((not value)
+			nil)
+		((stringp value)
+			(substring-no-properties value))
+		(t
+			(error "Expected string value or nil, got %s" (type-of value)))))
+
 (defun org-json-format-timestamp (value)
 	"Convert a timestamp into a value to be passed to json-encode."
 	value) ; TODO
@@ -64,6 +79,7 @@
 (setq org-json-property-formatters-alist
 	'(
 		 (bool . org-json-format-bool)
+		 (string . org-json-format-string)
 		 (timestamp . org-json-format-timestamp)
 		 (strlist . org-json-format-array)
 		 (secondary-string . org-json-format-list-generic)))
@@ -171,10 +187,8 @@
 		((booleanp value) value)
 		((numberp value) value)
 		((symbolp value) value)
-		; Strip properties from strings (don't know if that matters for JSON encoding, but
-		; definitely for making printed value legible).
 		((stringp value)
-			(substring-no-properties value))
+			(org-json-format-string value))
 		; An org element
 		((org-element-type value)
 			(org-json-format-element value))
