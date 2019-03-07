@@ -224,6 +224,126 @@
 	(json-encode (org-json-format-element element)))
 
 
+(setq org-json-agenda-property-types-plist
+	'(
+		 breadcrumbs string
+		 done-face string
+		 dotime string
+		 duration string
+		 extra string
+		 face string
+		 ;; format string
+		 help-echo string
+		 level string
+		 mouse-face string
+		 org-agenda-type string
+		 org-category string
+		 org-complex-heading-regexp string
+		 ;; org-hd-marker string
+		 org-highest-priority string
+		 org-last-args string
+		 org-lowest-priority string
+		 ;; org-marker string
+		 org-not-done-regexp string
+		 ;; org-redo-cmd string
+		 org-series-cmd string
+		 org-todo-regexp string
+		 priority string
+		 priority-letter string
+		 tags string
+		 time string
+		 time-of-day string
+		 todo string
+		 todo-state string
+		 ts-date string
+		 txt string
+		 type string
+		 ))
+
+
+(defun org-json--get-agenda-lines ()
+	"Get the lines of org-agenda buffer (must be current buffer) which correspond to agenda items.
+
+	Code is derived from the org-batch-agenda-csv function."
+	(seq-filter
+		(lambda (line) (get-text-property 0 'org-category line))
+		(org-split-string (buffer-string) "\n")))
+
+
+(defun org-json--agenda-info-from-line (line)
+	"Get plist of org agenda info from line of agenda buffer (returned by org-json--get-agenda-lines)
+
+	Code is derived from the org-batch-agenda-csv function."
+	(org-fix-agenda-info (text-properties-at 0 line)))
+
+
+(defun org-json-format-agenda-info (info)
+	"Transform agenda item info into a format that can be passed to json-encode"
+	(let* ((propvals (make-hash-table :test 'equal))
+			(value nil)
+			(proptype nil)
+			(formatter nil)
+			(formatted nil))
+		(dolist (key (plist-get-keys org-json-agenda-property-types-plist))
+			(setq value (plist-get info key))
+			(setq proptype (plist-get org-json-agenda-property-types-plist key))
+			;; (setq formatter (alist-get proptype org-json-property-formatters-alist 'org-json-format-generic))
+			(setq formatter 'org-json-format-generic)
+			(catch 'skipprop
+				(setq formatted
+					(cond
+										; Proptype nil, use default
+						((not proptype) propval)
+										; Skip
+						((eq proptype 'skip) (throw 'skipprop nil))
+										; Formatter exists
+						(formatter (funcall formatter value))
+										; Formatter not found
+						(t
+							(error "No formatter for property type %s" proptype)
+							(throw 'skipprop))))
+				(puthash key formatted propvals)))
+		propvals))
+
+
+(defun org-json-encode-agenda-buffer ()
+	(json-encode
+		(org-json-format-array
+			(mapcar
+				(lambda (line) (org-json-format-agenda-info (org-json--agenda-info-from-line line)))
+				(org-json--get-agenda-lines)))))
+
+
+(defmacro org-json-with-agenda-buffer (options &rest body)
+	"Create a temporary agenda buffer and evaluate forms within it."
+	`(let ((cmd-key)
+           (parameters nil))
+		; Get cmd-key, params from options argument
+		(cond
+			; Just cmd-key
+			((stringp ,options)
+				(setq cmd-key ,options))
+			; List of (cmd-key[, params])
+			((listp ,options)
+				(setq cmd-key (nth 0 ,options))
+				(if (>= (length ,options) 2) (setq parameters (nth 1 ,options))))
+			; Not a list either, error
+			(t
+				(error "options argument should be string or list, got %s" (type-of ,options))))
+		 ;; (list cmd-key parameters)))
+		(with-temp-buffer
+			 (let ((org-agenda-buffer-name (buffer-name)))  ; Dear god, dynamic scoping...
+				; The following is taken from org-batch-agenda:
+				(org-eval-in-environment (org-make-parameter-alist parameters)
+					(if (> (length cmd-key) 2)
+						(org-tags-view nil cmd-key)
+						(org-agenda nil cmd-key)))
+				 ; Replace the following from org-batch agenda with body:
+				 ; (set-buffer org-agenda-buffer-name)
+				 ; (princ (buffer-string)))
+				 ,@body))))
+
+
 (provide 'org-export-json)
 
 ;;; org-export-json.el ends here
