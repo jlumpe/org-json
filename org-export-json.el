@@ -146,10 +146,12 @@
 
 
 (defun org-json--list-elem-properties (elem)
+	"Get a list of all property keys for an element."
 	(plist-get-keys (nth 1 elem)))
 
 
 (defun org-json--get-property-type (eltype property)
+	"Get the type of a property from org-json-property-types-plist by element type and property name."
 	(catch 'proptype
 		(dolist (proptypes (list
 							   (plist-get org-json-property-types-plist eltype)
@@ -166,6 +168,7 @@
 		   (proptype nil)
 		   (formatter nil)
 		   (formatted nil))
+		; For each property in the element
 		(dolist (propname (org-json--list-elem-properties element))
 			(setq propval (org-element-property propname element))
 			(setq proptype (org-json--get-property-type eltype propname))
