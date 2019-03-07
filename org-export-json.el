@@ -122,7 +122,7 @@
 			:tag secondary-string)
 		macro (
 			:args strlist)
-		plainlist (
+		plain-list (
 			:structure skip)
 		planning (
 			:closed timestamp
