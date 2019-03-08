@@ -339,6 +339,7 @@
 
 
 (defun org-json-encode-agenda-buffer ()
+	"Encode the current agenda buffer as JSON"
 	(json-encode
 		(org-json-format-array
 			(mapcar
@@ -347,7 +348,10 @@
 
 
 (defmacro org-json-with-agenda-buffer (options &rest body)
-	"Create a temporary agenda buffer and evaluate forms within it."
+	"Create a temporary agenda buffer and evaluate forms within it.
+
+	OPTIONS must be either a CMD-KEY string or a list of (CMD-KEY[, PARAMETERS]),
+	where CMD-KEY and PARAMETERS are the arguments to org-batch-agenda."
 	`(let ((cmd-key)
            (parameters nil))
 		; Get cmd-key, params from options argument
