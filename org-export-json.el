@@ -110,6 +110,14 @@
 	"Map org-json-format-generic over a list and return a vector."
 	(org-json-format-array (mapcar 'org-json-format-generic value)))
 
+(defun org-json-format-secondary-string (value)
+	"Format a \"secondary string\" property, which as far as I can tell is either a single string or list
+    of strings or other types.
+
+    Always return an array for this.
+    "
+	(org-json-format-list-generic (if (stringp value) (list value) value)))
+
 
 (defun org-json--make-error (message &rest objects)
 	"Make a JSON object with an error message"
@@ -130,7 +138,7 @@
 		 number org-json-format-number
 		 timestamp org-json-format-timestamp
 		 strlist org-json-format-array
-		 secondary-string org-json-format-list-generic
+		 secondary-string org-json-format-secondary-string
 		 t org-format-generic))
 
 
