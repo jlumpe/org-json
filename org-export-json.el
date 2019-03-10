@@ -78,7 +78,7 @@
 
 (defun org-json-format-timestamp (value)
 	"Convert a timestamp into a value to be passed to json-encode."
-	value) ; TODO
+	(if value (org-json-format-element value) nil))
 
 (defun org-json-format-plist (value)
 	"Convert a property list into a value to be passed to json-encode.
