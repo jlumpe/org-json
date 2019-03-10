@@ -352,8 +352,18 @@
 
 (defun org-json-format-agenda-info (info)
 	"Transform agenda item info into a format that can be passed to json-encode"
-	(org-json--format-property-values info org-json-agenda-property-types-plist
-		:keys (plist-get-keys org-json-agenda-property-types-plist)))
+	(let* ((formatted (org-json--format-property-values info org-json-agenda-property-types-plist
+				:keys (plist-get-keys org-json-agenda-property-types-plist)))
+			  (marker (plist-get info 'org-marker))
+			  (info-file (buffer-file-name (marker-buffer marker))))
+		(puthash 'file info-file formatted)
+		(puthash 'file-relative (file-relative-name info-file org-directory) formatted)
+		(org-with-point-at marker
+			(org-with-wide-buffer
+				(puthash 'element (org-json-format-element (org-element-at-point)) formatted)
+				(puthash 'path (org-json-format-array (org-get-outline-path t)) formatted)
+				))
+		formatted))
 
 
 (defun org-json-encode-agenda-buffer ()
@@ -371,7 +381,7 @@
 	OPTIONS must be either a CMD-KEY string or a list of (CMD-KEY[, PARAMETERS]),
 	where CMD-KEY and PARAMETERS are the arguments to org-batch-agenda."
 	`(let ((cmd-key)
-           (parameters nil))
+	       (parameters nil))
 		; Get cmd-key, params from options argument
 		(cond
 			; Just cmd-key
