@@ -165,16 +165,26 @@
 		(dolist (key keys)
 			(let* ((value (plist-get properties key))
 			       (proptype (org-json--plist-get-default property-types key default-type))
-					  (formatter (org-json--plist-get-default formatters proptype default-formatter))
-						  (formatted nil))
-				;; Key present in properties, type not nil
-				(when (and (plist-member properties key) proptype)
-					; Formatter does not exist
-					(unless formatter
+			       (formatter (org-json--plist-get-default formatters proptype default-formatter)))
+				;; (princ "KEY: ")
+				;; (princ key)
+				;; (princ "\n")
+				(catch 'skipprop
+					;; Key not present in property plist, skip
+					(unless (plist-member properties key)
+						(throw 'skipprop nil))
+					;; (princ "  in properties!\n")
+					;; Type explicitly set to nil in property-types, skip
+					(when (and (plist-member property-types key) (not proptype))
+						;; (princ "  nil type\n")
+						(throw 'skipprop nil))
+					;; Have property type but no formatter for it
+					(when (and proptype (not formatter))
 						(error "No formatter for property type %s" proptype))
-					; All good, format it
-					(setq formatted (funcall formatter value))
-					(puthash key formatted output)
+					;; Valid formatter
+					(when formatter
+						;; (princ "  formatting!\n")
+						(puthash key (funcall formatter value) output))
 					)))
 		output))
 
@@ -185,8 +195,8 @@
 	'(
 		all (
 			:parent nil
-			:begin nil
-			:end nil
+			;; :begin nil
+			;; :end nil
 			:contents-begin nil
 			:contents-end nil
 			:post-affiliated nil
@@ -229,9 +239,9 @@
 		))
 
 
-(defun org-json--list-elem-properties (elem)
-	"Get a list of all property keys for an element."
-	(plist-get-keys (nth 1 elem)))
+(defun org-json--get-elem-properties-plist (elem)
+	"Get a plist of all properties for an element."
+	(nth 1 elem))
 
 
 ;; (defun org-json--get-property-type (eltype property)
@@ -253,9 +263,9 @@
 
 (defun org-json--format-elem-properties (element)
 	(org-json--format-property-values
-		(org-json--list-elem-properties element)
+		(org-json--get-elem-properties-plist element)
 		(org-json--get-element-property-types (org-element-type element))
-		:keys (org-json--list-elem-properties element)
+		;; :keys (org-json--list-elem-properties element)
 		:default-formatter 'org-json-format-generic))
 
 
