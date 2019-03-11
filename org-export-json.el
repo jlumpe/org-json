@@ -121,14 +121,14 @@
 
 (defun org-json--make-error (message &rest objects)
 	"Make a JSON object with an error message"
-	(let ((formatted (eval `(format ,message ,@objects))))
+	(let ((formatted (apply `format message objects)))
 		`((_error . ,formatted))))
 
 (defun org-json--maybe-error (strict message &rest objects)
 	"Throw an actual error if strict is non-nil, else return a JSON error object."
 	(if strict
-		(eval `(error ,message ,@objects))
-		(eval `(org-json--make-error ,message ,@objects))))
+		(apply 'error message objects)
+		(apply 'org-json--make-error message objects)))
 
 
 (setq org-json-property-formatters-plist
