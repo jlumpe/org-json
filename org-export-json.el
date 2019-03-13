@@ -271,10 +271,24 @@
 
 (defun org-json-format-node (node)
 	"Transform an org mode AST node into a format that can be passed to json-encode."
-	(list
-		(cons 'org_node_type (org-element-type node))
-		(cons 'properties (org-json--format-node-properties node))
-		(cons 'contents (org-json-format-list-generic (org-element-contents node)))))
+	(let ((node-type (org-element-type node))
+			 (keywords (make-hash-table :test 'equal))
+			 (contents nil))
+		;; Iterate over contents
+		(dolist (item (org-element-contents node))
+			(if (equal (org-element-type item) 'keyword)
+				;; Intercept keyword nodes and add to hash
+				(puthash
+					(org-element-property :key item)
+					(org-json-format-generic (org-element-property :value item))
+					keywords)
+				;; Otherwise add to contents list
+				(add-to-list 'contents item t)))
+		(list
+			(cons 'org_node_type node-type)
+			(cons 'properties (org-json--format-node-properties node))
+			(cons 'keywords keywords)
+			(cons 'contents (org-json-format-list-generic contents)))))
 
 
 (defun org-json-encode-node (node)
