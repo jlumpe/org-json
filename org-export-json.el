@@ -78,7 +78,7 @@
 
 (defun org-json-format-timestamp (value)
 	"Convert a timestamp into a value to be passed to json-encode."
-	(if value (org-json-format-element value) nil))
+	(if value (org-json-format-node value) nil))
 
 (defun org-json-format-plist (value)
 	"Convert a property list into a value to be passed to json-encode.
@@ -100,9 +100,9 @@
 		((symbolp value) value)
 		((stringp value)
 			(org-json-format-string value))
-		; An org element
+		; An org AST node
 		((org-element-type value)
-			(org-json-format-element value))
+			(org-json-format-node value))
 		; Unknown
 		(t (org-json--maybe-error strict "Couldn't automatically encode value of type %s" (type-of value)))))
 
@@ -189,9 +189,9 @@
 		output))
 
 
-;;; Encode org elements
+;;; Encode org AST nodes
 
-(setq org-json-element-property-types-plist
+(setq org-json-node-property-types-plist
 	'(
 		all (
 			:parent nil
@@ -239,60 +239,60 @@
 		))
 
 
-(defun org-json--get-elem-properties-plist (elem)
-	"Get a plist of all properties for an element."
-	(nth 1 elem))
+(defun org-json--get-node-properties-plist (node)
+	"Get a plist of all properties for an AST node."
+	(nth 1 node))
 
 
 ;; (defun org-json--get-property-type (eltype property)
-;; 	"Get the type of a property from org-json-element-property-types-plist by element type and property name."
+;; 	"Get the type of a property from org-json-node-property-types-plist by node type and property name."
 ;; 	(catch 'proptype
 ;; 		(dolist (proptypes (list
-;; 							   (plist-get org-json-element-property-types-plist eltype)
-;; 							   (plist-get org-json-element-property-types-plist 'all)))
+;; 							   (plist-get org-json-node-property-types-plist eltype)
+;; 							   (plist-get org-json-node-property-types-plist 'all)))
 ;; 			(if (plist-member proptypes property)
 ;; 				(throw 'proptype (plist-get proptypes property))))
 ;; 		nil))
 
-(defun org-json--get-element-property-types (eltype)
-	"Get plist of property types for a given org element type."
+(defun org-json--get-node-property-types (eltype)
+	"Get plist of property types for a given org node type."
 	(org-combine-plists
-		(plist-get org-json-element-property-types-plist 'all)
-		(plist-get org-json-element-property-types-plist eltype)))
+		(plist-get org-json-node-property-types-plist 'all)
+		(plist-get org-json-node-property-types-plist eltype)))
 
 
-(defun org-json--format-elem-properties (element)
+(defun org-json--format-node-properties (node)
 	(org-json--format-property-values
-		(org-json--get-elem-properties-plist element)
-		(org-json--get-element-property-types (org-element-type element))
-		;; :keys (org-json--list-elem-properties element)
+		(org-json--get-node-properties-plist node)
+		(org-json--get-node-property-types (org-element-type node))
+		;; :keys (org-json--list-node-properties node)
 		:default-formatter 'org-json-format-generic))
 
 
-(defun org-json-format-element (element)
-	"Transform an org mode element/object into a format that can be passed to json-encode."
+(defun org-json-format-node (node)
+	"Transform an org mode AST node into a format that can be passed to json-encode."
 	(list
-		(cons 'org_element_type (org-element-type element))
-		(cons 'properties (org-json--format-elem-properties element))
-		(cons 'contents (org-json-format-list-generic (org-element-contents element)))))
+		(cons 'org_node_type (org-element-type node))
+		(cons 'properties (org-json--format-node-properties node))
+		(cons 'contents (org-json-format-list-generic (org-element-contents node)))))
 
 
-(defun org-json-encode-element (element)
-	"Encode an org mode element into a JSON string."
-	(json-encode (org-json-format-element element)))
+(defun org-json-encode-node (node)
+	"Encode an org mode AST node into a JSON string."
+	(json-encode (org-json-format-node node)))
 
 
 (defun org-json-export-file ()
 	(interactive)
 	(write-region
-		(org-json-encode-element (org-element-parse-buffer))
+		(org-json-encode-node (org-element-parse-buffer))
 		nil
 		(concat (buffer-file-name) ".json")))
 
 
 ;; (org-export-define-backend 'json
 ;; 	'(
-;; 		 :org-data 'org-json-encode-element))
+;; 		 :org-data 'org-json-encode-node))
 
 
 ;;; Agenda
@@ -360,7 +360,7 @@
 		(puthash 'file-relative (file-relative-name info-file org-directory) formatted)
 		(org-with-point-at marker
 			(org-with-wide-buffer
-				(puthash 'element (org-json-format-element (org-element-at-point)) formatted)
+				(puthash 'node (org-json-format-node (org-element-at-point)) formatted)
 				(puthash 'path (org-json-format-array (org-get-outline-path t)) formatted)
 				))
 		formatted))
