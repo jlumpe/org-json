@@ -364,6 +364,18 @@
 	(org-fix-agenda-info (text-properties-at 0 line)))
 
 
+(defun org-json--headline-at-point ()
+	"Like org-element-at-point but parse objects in headline's :title property."
+	(let* ((elem (org-element-at-point))
+		   (eltype (org-element-type elem))
+		   (title (org-element-property :title elem)))
+		(when (not (eq eltype 'headline))
+			(error "Expected headline element at point, got %s" eltype))
+		(org-element-put-property elem :title
+			(org-element-parse-secondary-string title (alist-get 'headline org-element-object-restrictions)))
+		elem))
+
+
 (defun org-json-format-agenda-info (info)
 	"Transform agenda item info into a format that can be passed to json-encode"
 	(let* ((formatted (org-json--format-property-values info org-json-agenda-property-types-plist
@@ -374,7 +386,8 @@
 		(puthash 'file-relative (file-relative-name info-file org-directory) formatted)
 		(org-with-point-at marker
 			(org-with-wide-buffer
-				(puthash 'node (org-json-format-node (org-element-at-point)) formatted)
+				;; (puthash 'node (org-json-format-node (org-element-at-point)) formatted)
+				(puthash 'node (org-json-format-node (org-json--headline-at-point)) formatted)
 				(puthash 'path (org-json-format-array (org-get-outline-path t)) formatted)
 				))
 		formatted))
