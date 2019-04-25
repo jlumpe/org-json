@@ -304,11 +304,6 @@
 		(concat (buffer-file-name) ".json")))
 
 
-;; (org-export-define-backend 'json
-;; 	'(
-;; 		 :org-data 'org-json-encode-node))
-
-
 ;;; Agenda
 
 (setq org-json-agenda-property-types-plist
