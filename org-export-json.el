@@ -296,10 +296,16 @@
 	(json-encode (org-json-format-node node)))
 
 
+(defun org-json-encode-buffer ()
+	"Encode the current org mode buffer into a JSON string."
+	(org-json-encode-node (org-element-parse-buffer)))
+
+
 (defun org-json-export-file ()
+	"""Export current org mode buffer to JSON file."
 	(interactive)
 	(write-region
-		(org-json-encode-node (org-element-parse-buffer))
+		(org-json-encode-buffer)
 		nil
 		(concat (buffer-file-name) ".json")))
 
