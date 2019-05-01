@@ -1,0 +1,36 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Org AST node",
+	"description": "An element or object in an org document's Abstract Syntax Tree.",
+	"type": "object",
+	"properties": {
+		"org_node_type": {
+			"description": "The node's type, as obtained by (org-element-type).",
+			"type": "string"
+		},
+		"properties": {
+			"description": "Mapping of property names (with initial colon removed) to values.",
+			"type": "object",
+			"additionalProperties": {
+				"$comment": "TODO"
+			}
+		},
+		"keywords": {
+			"description": "Any nodes of type \"keyword\" are omitted from \"contents\" and instead included here as key-value pairs.",
+			"type": "object",
+			"additionalProperties": { "type": "string" }
+		},
+		"contents": {
+			"description": "Contents of node as obtained by (org-element-contents). Either nested org nodes or strings.",
+			"type": "array",
+			"items": {
+				"anyOf": [
+					{ "$ref": "#" },
+					{ "type": "string" }
+				]
+			}
+		}
+	},
+	"requiredProperties": ["type", "properties", "keywords", "contents"],
+	"additionalProperties": false
+}
