@@ -295,13 +295,12 @@
 	(org-json-encode-node (org-element-parse-buffer)))
 
 
-(defun org-json-export-file ()
-	"""Export current org mode buffer to JSON file."
+(defun org-json-export-buffer ()
+	"Export current org mode buffer to JSON file."
 	(interactive)
-	(write-region
-		(org-json-encode-buffer)
-		nil
-		(concat (buffer-file-name) ".json")))
+	(let* ((default-filename (concat (file-name-nondirectory (buffer-file-name)) ".json"))
+		   (filename (read-file-name "Export org file to JSON: " nil nil nil default-filename 'identity)))
+		(write-region (org-json-encode-buffer) nil filename)))
 
 
 ;;; Agenda
