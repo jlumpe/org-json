@@ -166,24 +166,18 @@
 			(let* ((value (plist-get properties key))
 			       (proptype (org-json--plist-get-default property-types key default-type))
 			       (formatter (org-json--plist-get-default formatters proptype default-formatter)))
-				;; (princ "KEY: ")
-				;; (princ key)
-				;; (princ "\n")
 				(catch 'skipprop
 					;; Key not present in property plist, skip
 					(unless (plist-member properties key)
 						(throw 'skipprop nil))
-					;; (princ "  in properties!\n")
 					;; Type explicitly set to nil in property-types, skip
 					(when (and (plist-member property-types key) (not proptype))
-						;; (princ "  nil type\n")
 						(throw 'skipprop nil))
 					;; Have property type but no formatter for it
 					(when (and proptype (not formatter))
 						(error "No formatter for property type %s" proptype))
 					;; Valid formatter
 					(when formatter
-						;; (princ "  formatting!\n")
 						(puthash key (funcall formatter value) output))
 					)))
 		output))
@@ -387,7 +381,6 @@
 		(puthash 'file-relative (file-relative-name info-file org-directory) formatted)
 		(org-with-point-at marker
 			(org-with-wide-buffer
-				;; (puthash 'node (org-json-format-node (org-element-at-point)) formatted)
 				(puthash 'node (org-json-format-node (org-json--headline-at-point)) formatted)
 				(puthash 'path (org-json-format-array (org-get-outline-path t)) formatted)
 				))
