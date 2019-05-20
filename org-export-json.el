@@ -278,11 +278,11 @@
 					(org-json-format-generic (org-element-property :value item))
 					keywords)
 				;; Otherwise add to contents list
-				(add-to-list 'contents item t)))
+				(push item contents)))
 		(setq formatted (list
 			(cons 'org_node_type node-type)
 			(cons 'properties (org-json--format-node-properties node))
-			(cons 'contents (org-json-format-list-generic contents))))
+			(cons 'contents (org-json-format-list-generic (reverse contents)))))
 		(unless (hash-table-empty-p keywords)
 			(add-to-list 'formatted (cons 'keywords keywords) t))
 		formatted))
