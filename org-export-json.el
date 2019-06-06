@@ -188,14 +188,17 @@
 (setq org-json-node-property-types-plist
 	'(
 		all (
+			; Never include parent, leads to infinite recursion
 			:parent nil
-			;; :begin nil
-			;; :end nil
+			; These properties have to do with absolute buffer positions and thus probably aren't useful to export
+			:begin nil
+			:end nil
 			:contents-begin nil
 			:contents-end nil
-			:post-affiliated nil
-			:pre-blank nil
-			:post-blank nil)
+			; These can be useful when converting from JSON to another format
+			:post-affiliated number
+			:pre-blank number
+			:post-blank number)
 		entity (
 			:latex-math-p bool
 			:use-brackets-p bool)
