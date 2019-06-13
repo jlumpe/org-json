@@ -29,11 +29,36 @@
 (require 'json)
 
 
+
+;;; Variables
+(defcustom org-json-data-type-property "$$data_type"
+	"This property is added to all objects in the exported JSON to indicate the data type of the object.
+
+	Set to nil to disable."
+	:type 'string)
+
+
 ;;; Utility code
 
 (defun org-json--plist-get-default (plist key default)
 	"Get value from plist or default if key is not present."
 	(if (plist-member plist key) (plist-get plist key) default))
+
+(defun org-json--make-object-hash (&optional data-type)
+	"Create a hash table to store data for a JSON object.
+
+	DATA-TYPE is a string indicating how the object data should be interpreted,
+	e.g. \"mapping\" for a standard mapping with string keys. The hash table
+	will be initialized with a property having this value and name according
+	to the value of the org-json-data-type-property variable. If either is nil
+	this step is skipped.
+
+	This function should be used for all data to be converted into a JSON object
+	because json-encode will always handle it correctly even if empty."
+	(let ((objhash (make-hash-table :test 'equal)))
+		(when (and org-json-data-type-property data-type)
+			(puthash org-json-data-type-property data-type objhash))
+		objhash))
 
 
 ;;; Formatting generic values for JSON encoding
@@ -81,29 +106,20 @@
 	(if value (org-json-format-node value) nil))
 
 (defun org-json-format-plist (value)
-	"Convert a property list into a value to be passed to json-encode.
-
-	Will be converted to a hash map, because json-encode will handle this
-	as an empty object instead of null.
-	"
-	(let ((myhash make-hash-table :test 'equal))
+	"Convert a property list into a value to be passed to json-encode."
+	(let ((objhash (org-json--make-object-hash "mapping")))
 		(dolist (property (plist-get-keys value))
-			(puthash property (org-json-format-generic (plist-get property value)) hash))
-		myhash))
+			(puthash property (org-json-format-generic (plist-get property value)) objhash))
+		objhash))
 
 (defun org-json-format-alist (value)
-	"Convert an alist into a value to be passed to json-encode.
-
-	Will be converted to a hash map to make sure it is always encoded as
-	a JSON object, because it's not always possible to tell if a value is
-	supposed to be an alist or not.
-	"
-	(let ((myhash (make-hash-table :test 'equal)))
+	"Convert an alist into a value to be passed to json-encode."
+	(let ((objhash (org-json--make-object-hash "mapping")))
 		(dolist (pair value)
 			; Should be a cons cell, skip otherwise
 			(when (consp pair)
-				(puthash (car pair) (org-json-format-generic (cdr pair)) myhash)))
-		myhash))
+				(puthash (car pair) (org-json-format-generic (cdr pair)) objhash)))
+		objhash))
 
 (defun org-json-format-generic (value &optional strict)
 	"Format a generic value for JSON output."
@@ -135,8 +151,9 @@
 
 (defun org-json--make-error (message &rest objects)
 	"Make a JSON object with an error message"
-	(let ((formatted (apply `format message objects)))
-		`((_error . ,formatted))))
+	(let ((errobj (org-json--make-object-hash "error")))
+		(puthash 'message (apply `format message objects) errobj)
+		errobj))
 
 (defun org-json--maybe-error (strict message &rest objects)
 	"Throw an actual error if strict is non-nil, else return a JSON error object."
@@ -174,7 +191,7 @@
 	:default-formatter - Default formatter function name for keys not in PROPERTY-TYPES.
 
 	Returns a hash table."
-	(let ((output (make-hash-table :test 'equal))
+	(let ((output (org-json--make-object-hash "mapping"))
 	      (keys (org-json--plist-get-default options :keys (plist-get-keys properties)))
 	      (formatters (org-json--plist-get-default options :formatters org-json-property-formatters-plist))
 	      (default-type (plist-get options :default-type))
@@ -286,9 +303,9 @@
 (defun org-json-format-node (node)
 	"Transform an org mode AST node into a format that can be passed to json-encode."
 	(let ((node-type (org-element-type node))
-	      (keywords (make-hash-table :test 'equal))
+	      (keywords (org-json--make-object-hash "mapping"))
 	      (contents nil)
-	      (formatted nil))
+	      (formatted (org-json--make-object-hash "org")))
 		;; Iterate over contents
 		(dolist (item (org-element-contents node))
 			(if (equal (org-element-type item) 'keyword)
@@ -299,12 +316,11 @@
 					keywords)
 				;; Otherwise add to contents list
 				(push item contents)))
-		(setq formatted (list
-			(cons 'org_node_type node-type)
-			(cons 'properties (org-json--format-node-properties node))
-			(cons 'contents (org-json-format-list-generic (reverse contents)))))
+		(puthash 'org_node_type node-type formatted)
+		(puthash 'properties (org-json--format-node-properties node) formatted)
+		(puthash 'contents (org-json-format-list-generic (reverse contents)) formatted)
 		(unless (hash-table-empty-p keywords)
-			(add-to-list 'formatted (cons 'keywords keywords) t))
+			(puthash 'keywords keywords formatted))
 		formatted))
 
 
