@@ -31,6 +31,6 @@
 			}
 		}
 	},
-	"requiredProperties": ["type", "properties", "keywords", "contents"],
+	"requiredProperties": ["type", "properties", "contents"],
 	"additionalProperties": false
 }
