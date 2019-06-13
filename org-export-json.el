@@ -88,7 +88,21 @@
 	"
 	(let ((myhash make-hash-table :test 'equal))
 		(dolist (property (plist-get-keys value))
-			(puthash property (plist-get property value) hash))
+			(puthash property (org-json-format-generic (plist-get property value)) hash))
+		myhash))
+
+(defun org-json-format-alist (value)
+	"Convert an alist into a value to be passed to json-encode.
+
+	Will be converted to a hash map to make sure it is always encoded as
+	a JSON object, because it's not always possible to tell if a value is
+	supposed to be an alist or not.
+	"
+	(let ((myhash (make-hash-table :test 'equal)))
+		(dolist (pair value)
+			; Should be a cons cell, skip otherwise
+			(when (consp pair)
+				(puthash (car pair) (org-json-format-generic (cdr pair)) myhash)))
 		myhash))
 
 (defun org-json-format-generic (value &optional strict)
@@ -139,6 +153,8 @@
 		 timestamp        org-json-format-timestamp
 		 strlist          org-json-format-array
 		 secondary-string org-json-format-secondary-string
+		 plist            org-json-format-plist
+		 alist            org-json-format-alist
 		 t                org-json-format-generic
 		 ))
 
