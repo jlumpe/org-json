@@ -149,6 +149,37 @@
 	(org-json-format-list-generic (if (stringp value) (list value) value)))
 
 
+(defun org-json--format-src-block-parameters (parameters)
+	"Special case formatter for :parameters property of src-block element.
+
+    This is an alist with some information that would be useful to exporters trying
+    to convert the data to another format (specifically the :export key).
+    "
+	(let ((parsed (org-babel-parse-header-arguments parameters))
+		  (objhash (org-json--make-object-hash "mapping"))
+		  (key nil)
+		  (val nil)
+		  (varlist nil))
+		(dolist (pair parsed)
+			(setq key (car pair) val (cdr pair))
+			(case key
+				; This key can appear multiple times, add to list
+				((:var) (push val varlist))
+				; Strings
+				((:results :file :export)
+					(puthash key val objhash))
+				((:colnames)
+					; Single string
+					(when (stringp val)
+						(puthash key val objhash))
+					; List of strings
+					(when (listp val)
+						(puthash key (org-json-format-array val) objhash)))
+				))
+		(puthash :var (org-json-format-array varlist) objhash)
+	objhash))
+
+
 (defun org-json--make-error (message &rest objects)
 	"Make a JSON object with an error message"
 	(let ((errobj (org-json--make-object-hash "error")))
@@ -173,6 +204,7 @@
 		 plist            org-json-format-plist
 		 alist            org-json-format-alist
 		 t                org-json-format-generic
+		 src-block-parameters org-json--format-src-block-parameters
 		 ))
 
 
@@ -233,6 +265,8 @@
 			:post-affiliated number
 			:pre-blank number
 			:post-blank number)
+		babel (
+			:result strlist)
 		entity (
 			:latex-math-p bool
 			:use-brackets-p bool)
@@ -267,6 +301,8 @@
 			:scheduled timestamp)
 		property-drawer (
 			:properties nil) ; TODO
+		src-block (
+		    :parameters src-block-parameters)
 		))
 
 
