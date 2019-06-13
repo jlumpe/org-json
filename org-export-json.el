@@ -34,8 +34,132 @@
 (defcustom org-json-data-type-property "$$data_type"
 	"This property is added to all objects in the exported JSON to indicate the data type of the object.
 
-	Set to nil to disable."
-	:type 'string)
+Set to nil to disable."
+	:type '(string))
+
+(defcustom org-json-property-formatters-plist
+	'(
+		 bool             org-json-format-bool
+		 string           org-json-format-string
+		 number           org-json-format-number
+		 timestamp        org-json-format-timestamp
+		 strlist          org-json-format-array
+		 secondary-string org-json-format-secondary-string
+		 plist            org-json-format-plist
+		 alist            org-json-format-alist
+		 t                org-json-format-generic
+		 src-block-parameters org-json--format-src-block-parameters
+		 )
+	"Controls how different parameter data types are converted to JSON.
+
+plist which maps names of property data types to names of functions which
+format the data to a value that can be passed to the `json-encode' function."
+	:type '(plist :value-type symbol)
+	)
+
+(defcustom org-json-node-property-types-plist
+	'(
+		all (
+			; Never include parent, leads to infinite recursion
+			:parent nil
+			; These properties have to do with absolute buffer positions and thus probably aren't useful to export
+			:begin nil
+			:end nil
+			:contents-begin nil
+			:contents-end nil
+			; These can be useful when converting from JSON to another format
+			:post-affiliated number
+			:pre-blank number
+			:post-blank number)
+		babel (
+			:result strlist)
+		entity (
+			:latex-math-p bool
+			:use-brackets-p bool)
+		example-block (
+			:preserve-indent bool
+			:retain-labels bool
+			:use-labels bool)
+		headline (
+			:archivedp bool
+			:commentedp bool
+			:deadline timestamp
+			:footnote-section-p bool
+			:quotedp bool
+			:scheduled timestamp
+			:tags strlist
+			:title secondary-string)
+		inlinetask (
+			:closed timestamp
+			:deadline timestamp
+			:scheduled timestamp
+			:title secondary-string)
+		item (
+			:structure nil
+			:tag secondary-string)
+		macro (
+			:args strlist)
+		plain-list (
+			:structure nil)
+		planning (
+			:closed timestamp
+			:deadline timestamp
+			:scheduled timestamp)
+		property-drawer (
+			:properties nil) ; TODO
+		src-block (
+		    :parameters src-block-parameters)
+		 )
+	"Data types of node properties by node type.
+
+plist of plists. Outer plist keys are node types (see `org-element-type')
+with the \"all\" key matching all types. Inner plists map
+property names (see `org-element-properties') to data types
+in the `org-json-property-formatters-plist' variable. A value of nil
+means the property will be skipped."
+	:type '(plist :value-type (plist :value-type symbol)))
+
+(defcustom org-json-agenda-property-types-plist
+	'(
+		 breadcrumbs                string
+		 done-face                  string
+		 dotime                     string
+		 duration                   string
+		 extra                      string
+		 face                       string
+		 ;; format string
+		 help-echo                  string
+		 level                      string
+		 mouse-face                 string
+		 org-agenda-type            string
+		 org-category               string
+		 org-complex-heading-regexp string
+		 ;; org-hd-marker string
+		 org-highest-priority       number
+		 org-last-args              string
+		 org-lowest-priority        number
+		 ;; org-marker string
+		 org-not-done-regexp        string
+		 ;; org-redo-cmd string
+		 org-series-cmd             string
+		 org-todo-regexp            string
+		 priority                   number
+		 priority-letter            string
+		 tags                       string
+		 time                       string
+		 time-of-day                string
+		 todo                       string
+		 todo-state                 string
+		 ts-date                    string
+		 txt                        string
+		 type                       string
+		 )
+	"Data types of agenda properties
+
+plist mapping agenda item property names to data types in the
+`org-json-property-formatters-plist' variable. A value of nil means the property
+will be skipped."
+	:type '(plist :value-type symbol))
 
 
 ;;; Utility code
@@ -193,21 +317,6 @@
 		(apply 'org-json--make-error message objects)))
 
 
-(setq org-json-property-formatters-plist
-	'(
-		 bool             org-json-format-bool
-		 string           org-json-format-string
-		 number           org-json-format-number
-		 timestamp        org-json-format-timestamp
-		 strlist          org-json-format-array
-		 secondary-string org-json-format-secondary-string
-		 plist            org-json-format-plist
-		 alist            org-json-format-alist
-		 t                org-json-format-generic
-		 src-block-parameters org-json--format-src-block-parameters
-		 ))
-
-
 (defun org-json--format-property-values (properties property-types &rest options)
 	"Format property values based on their types.
 
@@ -250,60 +359,6 @@
 
 
 ;;; Encode org AST nodes
-
-(setq org-json-node-property-types-plist
-	'(
-		all (
-			; Never include parent, leads to infinite recursion
-			:parent nil
-			; These properties have to do with absolute buffer positions and thus probably aren't useful to export
-			:begin nil
-			:end nil
-			:contents-begin nil
-			:contents-end nil
-			; These can be useful when converting from JSON to another format
-			:post-affiliated number
-			:pre-blank number
-			:post-blank number)
-		babel (
-			:result strlist)
-		entity (
-			:latex-math-p bool
-			:use-brackets-p bool)
-		example-block (
-			:preserve-indent bool
-			:retain-labels bool
-			:use-labels bool)
-		headline (
-			:archivedp bool
-			:commentedp bool
-			:deadline timestamp
-			:footnote-section-p bool
-			:quotedp bool
-			:scheduled timestamp
-			:tags strlist
-			:title secondary-string)
-		inlinetask (
-			:closed timestamp
-			:deadline timestamp
-			:scheduled timestamp
-			:title secondary-string)
-		item (
-			:structure nil
-			:tag secondary-string)
-		macro (
-			:args strlist)
-		plain-list (
-			:structure nil)
-		planning (
-			:closed timestamp
-			:deadline timestamp
-			:scheduled timestamp)
-		property-drawer (
-			:properties nil) ; TODO
-		src-block (
-		    :parameters src-block-parameters)
-		))
 
 
 (defun org-json--get-node-properties-plist (node)
@@ -379,42 +434,6 @@
 
 
 ;;; Agenda
-
-(setq org-json-agenda-property-types-plist
-	'(
-		breadcrumbs string
-		done-face string
-		dotime string
-		duration string
-		extra string
-		face string
-		;; format string
-		help-echo string
-		level string
-		mouse-face string
-		org-agenda-type string
-		org-category string
-		org-complex-heading-regexp string
-		;; org-hd-marker string
-		org-highest-priority number
-		org-last-args string
-		org-lowest-priority number
-		;; org-marker string
-		org-not-done-regexp string
-		;; org-redo-cmd string
-		org-series-cmd string
-		org-todo-regexp string
-		priority number
-		priority-letter string
-		tags string
-		time string
-		time-of-day string
-		todo string
-		todo-state string
-		ts-date string
-		txt string
-		type string
-		))
 
 
 (defun org-json--get-agenda-lines ()
