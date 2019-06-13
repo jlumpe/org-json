@@ -386,7 +386,7 @@
 	(let* ((elem (org-element-at-point))
 		   (eltype (org-element-type elem))
 		   (title (org-element-property :title elem)))
-		(when (not (eq eltype 'headline))
+		(unless (eq eltype 'headline)
 			(error "Expected headline element at point, got %s" eltype))
 		(org-element-put-property elem :title
 			(org-element-parse-secondary-string title (alist-get 'headline org-element-object-restrictions)))
