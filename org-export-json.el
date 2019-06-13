@@ -133,13 +133,14 @@
 
 (setq org-json-property-formatters-plist
 	'(
-		 bool org-json-format-bool
-		 string org-json-format-string
-		 number org-json-format-number
-		 timestamp org-json-format-timestamp
-		 strlist org-json-format-array
+		 bool             org-json-format-bool
+		 string           org-json-format-string
+		 number           org-json-format-number
+		 timestamp        org-json-format-timestamp
+		 strlist          org-json-format-array
 		 secondary-string org-json-format-secondary-string
-		 t org-format-generic))
+		 t                org-json-format-generic
+		 ))
 
 
 (defun org-json--format-property-values (properties property-types &rest options)
