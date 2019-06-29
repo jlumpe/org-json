@@ -515,13 +515,18 @@ will be skipped."
 	"Transform agenda item info into a format that can be passed to json-encode"
 	(let* ((formatted (org-json--format-property-values info org-json-agenda-property-types-plist
 				:keys (plist-get-keys org-json-agenda-property-types-plist)))
-			  (marker (plist-get info 'org-marker))
-			  (info-file (buffer-file-name (marker-buffer marker))))
+			  (marker (plist-get info 'org-hd-marker))
+			  (info-file (buffer-file-name (marker-buffer marker)))
+			  (headline nil)
+			  (deadline nil))
 		(puthash 'file info-file formatted)
 		(puthash 'file-relative (file-relative-name info-file org-directory) formatted)
 		(org-with-point-at marker
 			(org-with-wide-buffer
-				(puthash 'node (org-json-format-node (org-json--headline-at-point)) formatted)
+				(setq headline (org-json--headline-at-point))
+				(setq deadline (org-element-property :deadline headline))
+				(puthash 'node (org-json-format-node headline) formatted)
+				(puthash 'deadline (if deadline (org-json-format-node deadline)) formatted)
 				(puthash 'path (org-json-format-array (org-get-outline-path t)) formatted)
 				))
 		formatted))
