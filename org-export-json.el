@@ -248,7 +248,7 @@ will be skipped."
 	Needs to convert nil into something that will be encoded as false
 	instead of null.
 	"
-	(if value t :json-false))
+	(if value t json-false))
 
 (defun org-json-format-string (value)
 	"Convert a string value into a value to be passed to json-encode.
