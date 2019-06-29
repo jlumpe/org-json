@@ -1,4 +1,4 @@
-# org-export-json
+# org-json
 
 This package is for encoding all or part of an Org mode file`s Abstract Syntax
 Tree (AST) into JSON format so that it can be read by other tools.
@@ -53,7 +53,9 @@ Additional data types are:
 
 ## Agenda export
 
-Agenda export is a work in progress. Use `org-json-encode-agenda-buffer` to encode all items in an active agenda buffer. Use the macro `org-json-with-agenda-buffer` to run an agenda command in a temporary buffer, like so:
+Agenda export is a work in progress. Use `org-json-encode-agenda-buffer` to encode all items in an
+active agenda buffer. Use the macro `org-json-with-agenda-buffer` to run an agenda command in a
+temporary buffer, like so:
 
 ```elisp
 (org-json-with-agenda-buffer "t"

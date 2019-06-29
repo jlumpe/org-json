@@ -1,11 +1,11 @@
-;;; org-export-json.el --- Export org-mode files as JSON          -*- lexical-binding: t; -*-
+;;; org-json.el --- Export org mode files as JSON          -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019 Jared Lumpe
 
 ;; Author: Jared Lumpe <mjlumpe@gmail.com>
 ;; Version: 0.1
 ;; Keywords: outlines
-;; Homepage: https://github.com/jlumpe/org-export-json
+;; Homepage: https://github.com/jlumpe/org-json
 
 ;; Package-Requires: ((emacs "25") (org "9"))
 
@@ -309,7 +309,8 @@ will be skipped."
     ; An org AST node
     ((org-element-type value)
       (org-json-format-node value))
-    ; Unknown
+    ; Don't try to automatically encode lists because the actual data type
+    ; is too ambiguous (damn elisp).
     (t (org-json--maybe-error strict "Couldn't automatically encode value of type %s" (type-of value)))))
 
 (defun org-json-format-list-generic (value)
@@ -582,6 +583,6 @@ will be skipped."
          ,@body))))
 
 
-(provide 'org-export-json)
+(provide 'org-json)
 
-;;; org-export-json.el ends here
+;;; org-json.el ends here
