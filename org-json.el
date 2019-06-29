@@ -76,8 +76,9 @@
 (require 'json)
 
 
-
 ;;; Variables
+(defgroup org-json nil "Customization for the org-json package" :group 'outline)
+
 (defcustom org-json-data-type-property "$$data_type"
   "This property is added to all objects in the exported JSON to indicate the data type of the object.
 
@@ -101,7 +102,8 @@ Set to nil to disable."
 
 plist which maps names of property data types to names of functions which
 format the data to a value that can be passed to the `json-encode' function."
-  :type '(plist :value-type symbol))
+  :type '(plist :value-type symbol)
+  :group 'org-json)
 
 (defcustom org-json-node-property-types-plist
   '(
@@ -163,7 +165,8 @@ with the \"all\" key matching all types. Inner plists map
 property names (see `org-element-properties') to data types
 in the `org-json-property-formatters-plist' variable. A value of nil
 means the property will be skipped."
-  :type '(plist :value-type (plist :value-type symbol)))
+  :type '(plist :value-type (plist :value-type symbol))
+  :group 'org-json)
 
 (defcustom org-json-agenda-property-types-plist
   '(
@@ -211,7 +214,8 @@ means the property will be skipped."
 plist mapping agenda item property names to data types in the
 `org-json-property-formatters-plist' variable. A value of nil means the property
 will be skipped."
-  :type '(plist :value-type symbol))
+  :type '(plist :value-type symbol)
+  :group 'org-json)
 
 
 ;;; Utility code
