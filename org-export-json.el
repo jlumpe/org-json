@@ -443,7 +443,7 @@ will be skipped."
 	(let ((node-type (org-element-type node))
 	      (keywords (org-json--make-object-hash "mapping"))
 	      (contents nil)
-	      (formatted (org-json--make-object-hash "org")))
+	      (formatted (org-json--make-object-hash "org-node")))
 		;; Iterate over contents
 		(dolist (item (org-element-contents node))
 			(if (equal (org-element-type item) 'keyword)
@@ -454,7 +454,7 @@ will be skipped."
 					keywords)
 				;; Otherwise add to contents list
 				(push item contents)))
-		(puthash 'org_node_type node-type formatted)
+		(puthash 'type node-type formatted)
 		(puthash 'properties (org-json--format-node-properties node) formatted)
 		(puthash 'contents (org-json-format-list-generic (reverse contents)) formatted)
 		(unless (hash-table-empty-p keywords)

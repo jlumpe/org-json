@@ -4,7 +4,7 @@
 	"description": "An element or object in an org document's Abstract Syntax Tree.",
 	"type": "object",
 	"properties": {
-		"org_node_type": {
+		"type": {
 			"description": "The node's type, as obtained by (org-element-type).",
 			"type": "string"
 		},
@@ -18,7 +18,9 @@
 		"keywords": {
 			"description": "Any nodes of type \"keyword\" are omitted from \"contents\" and instead included here as key-value pairs.",
 			"type": "object",
-			"additionalProperties": { "type": "string" }
+			"additionalProperties": {
+				"$comment": "TODO"
+			}
 		},
 		"contents": {
 			"description": "Contents of node as obtained by (org-element-contents). Either nested org nodes or strings.",
