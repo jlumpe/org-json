@@ -16,7 +16,7 @@ element or object) from the data structure returned by one of the org-element fu
 
 The output looks like:
 
-```json
+```
 {
   "$$data_type": "org-node",
   "type": "headline",
@@ -26,29 +26,42 @@ The output looks like:
 }
 ```
 
-"type" is the node type returned by `org-element-type` and "properties" are property names and
+`"type"` is the node type returned by `org-element-type` and `"properties"` are property names and
 values obtained from `org-element-property` (see documentation for the
 [Org element API](https://orgmode.org/worg/dev/org-element-api.html) for a complete list of all node
-types and properties). Leading colons in the property keys are omitted. "contents" is the encoded
+types and properties). Leading colons in the property keys are omitted. `"contents"` is the encoded
 return value of `org-element-contents`, the items of which are either more org nodes or strings. Any
 elements of type "keyword" are omitted from the contents list and instead included as key-value
-pairs in the "keywords" property, which is not included otherwise.
+pairs in the `"keywords"` property, which is not included otherwise.
 
 
 ### Nested data objects
 
-The "$$data-type" property is added to differentiate encoded org nodes and other data types from
+The `"$$data-type"` property is added to differentiate encoded org nodes and other data types from
 generic sets of key/value pairs that occur in alists or plists (the latter of which has
 `"$$data-type": "mapping"`).
 
 Additional data types are:
 
-```json
+```
 {
   "$$data-type": "error",
   "message": "Describes an error in automatically encoding this data structure."
 }
 ```
+
+
+## Agenda export
+
+Agenda export is a work in progress. Use `org-json-encode-agenda-buffer` to encode all items in an active agenda buffer. Use the macro `org-json-with-agenda-buffer` to run an agenda command in a temporary buffer, like so:
+
+```elisp
+(org-json-with-agenda-buffer "t"
+  (setq my-json-string (org-json-encode-agenda-buffer))
+```
+
+There is no interactive command yet.
+
 
 ## Notes
 
