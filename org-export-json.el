@@ -167,28 +167,32 @@ means the property will be skipped."
 
 (defcustom org-json-agenda-property-types-plist
   '(
+    agenda-day                 string
     breadcrumbs                string
-    done-face                  string
+    date                       string
+    day                        string
+    ;; done-face                  string
     dotime                     string
     duration                   string
     extra                      string
-    face                       string
-    ;; format string
-    help-echo                  string
+    ;; face                       string
+    ;; format
+    ;; help-echo                  string
     level                      string
-    mouse-face                 string
+    ;; mouse-face                 string
     org-agenda-type            string
     org-category               string
-    org-complex-heading-regexp string
-    ;; org-hd-marker string
+    ;; org-complex-heading-regexp string
+    org-day-cnt t
+    ;; org-hd-marker
     org-highest-priority       number
-    org-last-args              string
+    ;; org-last-args
     org-lowest-priority        number
-    ;; org-marker string
-    org-not-done-regexp        string
-    ;; org-redo-cmd string
+    ;; org-marker
+    ;; org-not-done-regexp        string
+    ;; org-redo-cmd
     org-series-cmd             string
-    org-todo-regexp            string
+    ;; org-todo-regexp            string
     priority                   number
     priority-letter            string
     tags                       string
@@ -196,9 +200,11 @@ means the property will be skipped."
     time-of-day                string
     todo                       string
     todo-state                 string
-    ts-date                    string
+    ts-date                    number
     txt                        string
     type                       string
+    ;; undone-face                string
+    warntime                   t
     )
   "Data types of agenda properties
 
