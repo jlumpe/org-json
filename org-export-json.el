@@ -1,9 +1,13 @@
-;;; org-export-json.el --- export org-mode files as JSON          -*- lexical-binding: t; -*-
+;;; org-export-json.el --- Export org-mode files as JSON          -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019  Jared Lumpe
+;; Copyright (C) 2019 Jared Lumpe
 
-;; Author: Jared Lumpe
+;; Author: Jared Lumpe <mjlumpe@gmail.com>
+;; Version: 0.1
 ;; Keywords: outlines
+;; Homepage: https://github.com/jlumpe/org-export-json
+
+;; Package-Requires: ((emacs "25") (org "9"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,7 +24,50 @@
 
 ;;; Commentary:
 
-;;
+;; This package is for encoding all or part of an Org mode file's Abstract Syntax
+;; Tree (AST) into JSON format so that it can be read by other tools. The primary
+;; interactive entry point is `org-json-export-buffer', which prompts for a file
+;; name and exports the entire buffer's AST. The equivalent API function is
+;; `org-json-encode-buffer', which returns a string. Additionally, you can use
+;; `org-json-encode-node' to encode an AST node (org element or object) from the
+;; data structure returned by one of the org-element functions
+;; (`org-element-parse-buffer', `org-element-at-point', etc.).
+
+;; The output looks like:
+
+;; {
+;;   "$$data_type": "org-node",
+;;   "type": "headline",
+;;   "properties": { ... },
+;;   "keywords": { ... },
+;;   "contents": [ ... ]
+;; }
+
+;; "type" is the node type returned by `org-element-type'. "properties" are
+;; property names and values (leading colons in the key names are omitted)
+;; obtained from `org-element-property'. "contents" is the encoded return
+;; value of `org-element-contents', the items of which are either more org
+;; nodes or strings. Any elements of type "keyword" are omitted from the
+;; contents list and instead included as key-value pairs in the "keywords"
+;; property, which is not included otherwise.
+
+;; The "$$data-type" property is added to differentiate encoded org nodes
+;; and other data types from generic sets of key/value pairs that occur in
+;; alists or plists (the latter of which has "$$data-type": "mapping").
+
+;; Additional data types are:
+
+;; {
+;;   "$$data-type": "error",
+;;   "message": "Describes an error in automatically encoding this data structure."
+;; }
+
+;; The resulting JSON *should* include the correct choice of empty object ("{}"),
+;; empty list ("[]"), null, or false for the given context, even though these are
+;; given a value of nil in elisp (don't get me started).
+
+;; See URL `https://orgmode.org/worg/dev/org-element-api.html' for the complete list
+;; of element/object types and their properties.
 
 ;;; Code:
 
@@ -493,7 +540,7 @@ will be skipped."
 	"Create a temporary agenda buffer and evaluate forms within it.
 
 	OPTIONS must be either a CMD-KEY string or a list of (CMD-KEY[, PARAMETERS]),
-	where CMD-KEY and PARAMETERS are the arguments to org-batch-agenda."
+	where CMD-KEY and PARAMETERS are the arguments to `org-batch-agenda'."
 	`(let ((cmd-key)
 	       (parameters nil))
 		; Get cmd-key, params from options argument
