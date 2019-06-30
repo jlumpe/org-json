@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/jlumpe/org-json.svg?branch=master)](https://travis-ci.org/jlumpe/org-json)
 
-This package is for encoding all or part of an Org mode file`s Abstract Syntax
+This package is for encoding all or part of an Org mode file's Abstract Syntax
 Tree (AST) into JSON format so that it can be read by other tools.
 
 
@@ -53,6 +53,18 @@ Additional data types are:
 ```
 
 
+### JSON schemas
+
+Check out the `json-schemas` subdirectory for [JSON schema](https://json-schema.org/) definitions of the output (work in progress).
+
+
+### "Falsy" values
+
+The resulting JSON *should* include the correct choice of empty object ("{}"),
+empty list ("[]"), null, or false for the given context, even though these are
+all given a value of nil in elisp (don`t get me started).
+
+
 ## Agenda export
 
 Agenda export is a work in progress. Use `org-json-encode-agenda-buffer` to encode all items in an
@@ -67,8 +79,11 @@ temporary buffer, like so:
 There is no interactive command yet.
 
 
-## Notes
+## Customization
 
-The resulting JSON *should* include the correct choice of empty object ("{}"),
-empty list ("[]"), null, or false for the given context, even though these are
-given a value of nil in elisp (don`t get me started).
+You can customize which properties of different element types are included in the output and how they are processed by customizing the `org-json-node-property-types-plist` and `org-json-property-formatters-plist` (see the built-in documentation).
+
+
+## Related tools
+
+The [pyorg](https://github.com/jlumpe/pyorg) Python package can be used to read the exported JSON and convert it to other formats for export or display.
