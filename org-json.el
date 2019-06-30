@@ -80,7 +80,7 @@
 (defgroup org-json nil "Customization for the org-json package" :group 'outline)
 
 (defcustom org-json-data-type-property "$$data_type"
-  "This property is added to all objects in the exported JSON to indicate the data type of the object.
+  "Property which indicates the data type of exported objects.
 
 Set to nil to disable."
   :type '(string))
@@ -209,7 +209,7 @@ means the property will be skipped."
     ;; undone-face                string
     warntime                   t
     )
-  "Data types of agenda properties
+  "Data types of agenda properties.
 
 plist mapping agenda item property names to data types in the
 `org-json-property-formatters-plist' variable. A value of nil means the property
@@ -244,28 +244,25 @@ will be skipped."
 ;;; Formatting generic values for JSON encoding
 
 (defun org-json-format-array (value)
-  "Convert a list or sequence into a value to be passed to json-encode.
+  "Convert a list or sequence VALUE into a format to be passed to `json-encode'.
 
-  Needs to convert nil into something that will be encoded as an empty
-  array, not null.
-  "
+Needs to convert nil into something that will be encoded as an empty
+array, not null."
   (seq-into value 'vector))
 
 (defun org-json-format-bool (value)
-  "Convert a t/nil value into a value to be passed to json-encode.
+  "Convert boolean VALUE into a format to be passed to `json-encode'.
 
   Needs to convert nil into something that will be encoded as false
-  instead of null.
-  "
+  instead of null."
   (if value t json-false))
 
 (defun org-json-format-string (value)
-  "Convert a string value into a value to be passed to json-encode.
+  "Convert the string VALUE into a format to be passed to `json-encode'.
 
-  If value is a string, strip properties (don't know if that matters for JSON
-  encoding, but definitely for making printed value legible) and return. If symbol
-  return its name. If nil return nil. Otherwise throw an error.
-  "
+If value is a string, strip properties (don't know if that matters for JSON
+encoding, but definitely for making printed value legible) and return. If symbol
+return its name. If nil return nil. Otherwise throw an error."
   (cond
     ((not value)
       nil)
@@ -277,23 +274,24 @@ will be skipped."
       (error "Expected string value or nil, got %s" (type-of value)))))
 
 (defun org-json-format-number (value)
+  "Convert the number VALUE into a format to be passed to `json-encode'."
   (if (or (not value) (numberp value))
     value
     (error "Expected numeric value or nil, got %s" (type-of value))))
 
-(defun org-json-format-timestamp (value)
-  "Convert a timestamp into a value to be passed to json-encode."
-  (if value (org-json-format-node value) nil))
+(defun org-json-format-timestamp (elem)
+  "Convert the timestamp elem ELEM a value to be passed to `json-encode'."
+  (if elem (org-json-format-node elem) nil))
 
 (defun org-json-format-plist (value)
-  "Convert a property list into a value to be passed to json-encode."
+  "Convert a property list VALUE into a format to be passed to `json-encode'."
   (let ((objhash (org-json--make-object-hash "mapping")))
     (dolist (property (plist-get-keys value))
       (puthash property (org-json-format-generic (plist-get property value)) objhash))
     objhash))
 
 (defun org-json-format-alist (value)
-  "Convert an alist into a value to be passed to json-encode."
+  "Convert the alist VALUE into a format to be passed to `json-encode'."
   (let ((objhash (org-json--make-object-hash "mapping")))
     (dolist (pair value)
       ; Should be a cons cell, skip otherwise
@@ -302,7 +300,11 @@ will be skipped."
     objhash))
 
 (defun org-json-format-generic (value &optional strict)
-  "Format a generic value for JSON output."
+  "Format generic value for JSON output when the type is not known in advance.
+
+VALUE is a bool, number, symbol, string, or org element/object. nil is treated
+as false. Other types will result in an encoded error message if STRICT is nil
+or an error otherwise."
   (cond
     ;; Pass "booleans" (t + nil), numbers, symbols through
     ((booleanp value) value)
@@ -318,24 +320,22 @@ will be skipped."
     (t (org-json--maybe-error strict "Couldn't automatically encode value of type %s" (type-of value)))))
 
 (defun org-json-format-list-generic (value)
-  "Map org-json-format-generic over a list and return a vector."
+  "Map `org-json-format-generic' over a list VALUE and return a vector."
   (org-json-format-array (mapcar 'org-json-format-generic value)))
 
 (defun org-json-format-secondary-string (value)
-  "Format a \"secondary string\" property, which as far as I can tell is either a single string or list
-    of strings or other types.
+  "Format the \"secondary string\" property VALUE, which as far as I can tell is
+either a single string or list of strings or other types.
 
-    Always return an array for this.
-    "
+Always return an array for this."
   (org-json-format-list-generic (if (stringp value) (list value) value)))
 
 
 (defun org-json--format-src-block-parameters (parameters)
   "Special case formatter for :parameters property of src-block element.
 
-    This is an alist with some information that would be useful to exporters trying
-    to convert the data to another format (specifically the :export key).
-    "
+This is an alist with some information that would be useful to exporters trying
+to convert the data to another format (specifically the :export key)."
   (let ((parsed (org-babel-parse-header-arguments parameters))
         (objhash (org-json--make-object-hash "mapping"))
         (key nil)
@@ -377,18 +377,20 @@ will be skipped."
 (defun org-json--format-property-values (properties property-types &rest options)
   "Format property values based on their types.
 
-  PROPERTIES is a property plist. PROPERTY-TYPES is a plist mapping property keys to type symbols.
-  OPTIONS is an additional plist of options.
+PROPERTIES is a property plist. PROPERTY-TYPES is a plist mapping property keys
+to type symbols.
+OPTIONS is an additional plist of options.
 
-  Keys of OPTIONS are:
+Keys of OPTIONS are:
 
-  :keys - property keys to format. Defaults to all keys of PROPERTIES.
-  :formatters - plist mapping formatter names to function names. Defaults to org-json-property-formatters-plist.
-  :default-type - Default type symbol for keys not in PROPERTY-TYPES. Note that properties with a type
-    of nil will always be skipped.
-  :default-formatter - Default formatter function name for keys not in PROPERTY-TYPES.
+:keys - property keys to format. Defaults to all keys of PROPERTIES.
+:formatters - plist mapping formatter names to function names. Defaults to
+`org-json-property-formatters-plist'.
+:default-type - Default type symbol for keys not in PROPERTY-TYPES. Note that
+properties with a type of nil will always be skipped.
+:default-formatter - Default formatter function name for keys not in PROPERTY-TYPES.
 
-  Returns a hash table."
+Returns a hash table."
   (let ((output (org-json--make-object-hash "mapping"))
         (keys (org-json--plist-get-default options :keys (plist-get-keys properties)))
         (formatters (org-json--plist-get-default options :formatters org-json-property-formatters-plist))
@@ -449,7 +451,7 @@ will be skipped."
 
 
 (defun org-json-format-node (node)
-  "Transform an org mode AST node into a format that can be passed to json-encode."
+  "Transform org mode element/object NODE into a format that can be passed to `json-encode'."
   (let ((node-type (org-element-type node))
         (keywords (org-json--make-object-hash "mapping"))
         (contents nil)
@@ -473,7 +475,7 @@ will be skipped."
 
 
 (defun org-json-encode-node (node)
-  "Encode an org mode AST node into a JSON string."
+  "Encode an org mode element/object NODE into a JSON string."
   (json-encode (org-json-format-node node)))
 
 
@@ -522,7 +524,9 @@ will be skipped."
 
 
 (defun org-json-format-agenda-info (info)
-  "Transform agenda item info into a format that can be passed to json-encode"
+  "Transform agenda item info into a format that can be passed to `json-encode'.
+
+INFO is the plist returned by `org-fix-agenda-info'."
   (let* ((formatted
             (org-json--format-property-values
               info
@@ -546,7 +550,7 @@ will be skipped."
 
 
 (defun org-json-encode-agenda-buffer ()
-  "Encode the current agenda buffer as JSON"
+  "Encode the current agenda buffer as JSON."
   (json-encode
     (org-json-format-array
       (mapcar
@@ -555,10 +559,10 @@ will be skipped."
 
 
 (defmacro org-json-with-agenda-buffer (options &rest body)
-  "Create a temporary agenda buffer and evaluate forms within it.
+  "Create a temporary agenda buffer and evaluate forms in BODY within it.
 
-  OPTIONS must be either a CMD-KEY string or a list of (CMD-KEY[, PARAMETERS]),
-  where CMD-KEY and PARAMETERS are the arguments to `org-batch-agenda'."
+OPTIONS must be either a CMD-KEY string or a list of (CMD-KEY[, PARAMETERS]),
+where CMD-KEY and PARAMETERS are the arguments to `org-batch-agenda'."
   `(let ((cmd-key)
          (parameters nil))
     ; Get cmd-key, params from options argument
@@ -572,7 +576,7 @@ will be skipped."
         (if (>= (length ,options) 2) (setq parameters (nth 1 ,options))))
       ; Not a list either, error
       (t
-        (error "options argument should be string or list, got %s" (type-of ,options))))
+        (error "Options argument should be string or list, got %s" (type-of ,options))))
      ;; (list cmd-key parameters)))
     (with-temp-buffer
        (let ((org-agenda-buffer-name (buffer-name)))  ; Dear god, dynamic scoping...
