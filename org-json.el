@@ -72,6 +72,7 @@
 ;;; Code:
 
 
+(require 'cl-lib)
 (require 'org)
 (require 'json)
 
