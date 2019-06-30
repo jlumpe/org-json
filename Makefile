@@ -6,7 +6,7 @@ TESTS=
 
 CURL=curl --silent
 WORK_DIR=$(shell pwd)
-PACKAGE_NAME=$(shell basename $(WORK_DIR))
+PACKAGE_NAME=org-json
 AUTOLOADS_FILE=$(PACKAGE_NAME)-autoloads.el
 TRAVIS_FILE=.travis.yml
 TEST_DIR=ert-tests
