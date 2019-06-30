@@ -21,7 +21,7 @@ TEST_DEP_1_LATEST_URL=http://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/emac
 build :
 	$(EMACS) $(EMACS_BATCH) --eval             \
 	    "(progn                                \
-	      (setq byte-compile-error-on-warn t)  \
+	      (setq byte-compile-error-on-warn nil)  \
 	      (batch-byte-compile))" *.el
 
 test-dep-1 :
