@@ -265,7 +265,7 @@ How is this not part of the standard library?"
 
 Needs to convert nil into something that will be encoded as an empty
 array, not null."
-  (seq-into value 'vector))
+  (vconcat value nil))
 
 (defun org-json-format-bool (value)
   "Convert boolean VALUE into a format to be passed to `json-encode'.
