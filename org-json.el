@@ -220,6 +220,14 @@ will be skipped."
 
 ;;; Utility code
 
+(defun org-json--plist-get-keys (plist)
+  "Get a list of the keys in plist PLIST.
+
+How is this not part of the standard library?"
+  (cl-loop
+    for i from 0 to (- (length plist) 1) by 2
+    collect (nth i plist)))
+
 (defun org-json--plist-get-default (plist key default)
   "Get value from plist or default if key is not present."
   (if (plist-member plist key) (plist-get plist key) default))
@@ -286,7 +294,7 @@ return its name. If nil return nil. Otherwise throw an error."
 (defun org-json-format-plist (value)
   "Convert a property list VALUE into a format to be passed to `json-encode'."
   (let ((objhash (org-json--make-object-hash "mapping")))
-    (dolist (property (plist-get-keys value))
+    (dolist (property (org-json--plist-get-keys value))
       (puthash property (org-json-format-generic (plist-get property value)) objhash))
     objhash))
 
@@ -392,7 +400,7 @@ properties with a type of nil will always be skipped.
 
 Returns a hash table."
   (let ((output (org-json--make-object-hash "mapping"))
-        (keys (org-json--plist-get-default options :keys (plist-get-keys properties)))
+        (keys (org-json--plist-get-default options :keys (org-json--plist-get-keys properties)))
         (formatters (org-json--plist-get-default options :formatters org-json-property-formatters-plist))
         (default-type (plist-get options :default-type))
         (default-formatter (plist-get options :default-formatter)))
@@ -531,7 +539,7 @@ INFO is the plist returned by `org-fix-agenda-info'."
             (org-json--format-property-values
               info
               org-json-agenda-property-types-plist
-              :keys (plist-get-keys org-json-agenda-property-types-plist)))
+              :keys (org-json--plist-get-keys org-json-agenda-property-types-plist)))
          (marker (plist-get info 'org-hd-marker))
          (info-file (buffer-file-name (marker-buffer marker)))
          (headline nil)
