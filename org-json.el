@@ -357,7 +357,7 @@ to convert the data to another format (specifically the :export key)."
         (varlist nil))
     (dolist (pair parsed)
       (setq key (car pair) val (cdr pair))
-      (case key
+      (cl-case key
         ; This key can appear multiple times, add to list
         ((:var) (push val varlist))
         ; Strings
