@@ -1,5 +1,7 @@
 # org-json
 
+[![Build Status](https://travis-ci.org/jlumpe/org-json.svg?branch=master)](https://travis-ci.org/jlumpe/org-json)
+
 This package is for encoding all or part of an Org mode file`s Abstract Syntax
 Tree (AST) into JSON format so that it can be read by other tools.
 
