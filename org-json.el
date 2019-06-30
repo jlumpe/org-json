@@ -228,6 +228,10 @@ How is this not part of the standard library?"
     for i from 0 to (- (length plist) 1) by 2
     collect (nth i plist)))
 
+(defun org-json--hash-table-empty-p (table)
+	"Check whether a hash table is empty."
+	(zerop (hash-table-count table)))
+
 (defun org-json--plist-get-default (plist key default)
   "Get value from plist or default if key is not present."
   (if (plist-member plist key) (plist-get plist key) default))
@@ -477,7 +481,7 @@ Returns a hash table."
     (puthash 'type node-type formatted)
     (puthash 'properties (org-json--format-node-properties node) formatted)
     (puthash 'contents (org-json-format-list-generic (reverse contents)) formatted)
-    (unless (hash-table-empty-p keywords)
+    (unless (org-json--hash-table-empty-p keywords)
       (puthash 'keywords keywords formatted))
     formatted))
 
