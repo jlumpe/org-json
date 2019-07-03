@@ -80,7 +80,8 @@
 (require 'json)
 
 
-;;; Begin namespace
+;;; Begin namespace:
+;;;###autoload
 (define-namespace org-json-
 
 
