@@ -244,7 +244,7 @@ How is this not part of the standard library?"
   DATA-TYPE is a string indicating how the object data should be interpreted,
   e.g. \"mapping\" for a standard mapping with string keys. The hash table
   will be initialized with a property having this value and name according
-  to the value of the org-json-data-type-property variable. If either is nil
+  to the value of the `org-json-data-type-property' variable. If either is nil
   this step is skipped.
 
   This function should be used for all data to be converted into a JSON object
@@ -519,9 +519,9 @@ Returns a hash table."
 
 
 (defun org-json--agenda-info-from-line (line)
-  "Get plist of org agenda info from line of agenda buffer (returned by org-json--get-agenda-lines)
+  "Get plist of org agenda info from line of agenda buffer (returned by `org-json--get-agenda-lines')
 
-  Code is derived from the org-batch-agenda-csv function."
+  Code is derived from the `org-batch-agenda-csv' function."
   (org-fix-agenda-info (text-properties-at 0 line)))
 
 
