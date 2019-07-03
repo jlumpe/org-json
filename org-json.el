@@ -7,7 +7,7 @@
 ;; Keywords: outlines
 ;; Homepage: https://github.com/jlumpe/org-json
 
-;; Package-Requires: ((emacs "25") (seq "2.2") (org "9") (names "20151201"))
+;; Package-Requires: ((names "Lookup.Latest.Version") (emacs "25") (seq "2.2") (org "9"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
