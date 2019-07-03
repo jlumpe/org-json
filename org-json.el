@@ -237,8 +237,8 @@ How is this not part of the standard library?"
     collect (nth i plist)))
 
 (defun -hash-table-empty-p (table)
-	"Check whether a hash table is empty."
-	(zerop (hash-table-count table)))
+  "Check whether a hash table is empty."
+  (zerop (hash-table-count table)))
 
 (defun -plist-get-default (plist key default)
   "Get value from plist or default if key is not present."
@@ -247,14 +247,14 @@ How is this not part of the standard library?"
 (defun -make-object-hash (&optional data-type)
   "Create a hash table to store data for a JSON object.
 
-  DATA-TYPE is a string indicating how the object data should be interpreted,
-  e.g. \"mapping\" for a standard mapping with string keys. The hash table
-  will be initialized with a property having this value and name according
-  to the value of the `org-json-data-type-property' variable. If either is nil
-  this step is skipped.
+DATA-TYPE is a string indicating how the object data should be interpreted,
+e.g. \"mapping\" for a standard mapping with string keys. The hash table
+will be initialized with a property having this value and name according
+to the value of the `org-json-data-type-property' variable. If either is nil
+this step is skipped.
 
-  This function should be used for all data to be converted into a JSON object
-  because json-encode will always handle it correctly even if empty."
+This function should be used for all data to be converted into a JSON object
+because json-encode will always handle it correctly even if empty."
   (let ((objhash (make-hash-table :test 'equal)))
     (when (and data-type-property data-type)
       (puthash data-type-property data-type objhash))
@@ -344,10 +344,10 @@ or an error otherwise."
   (format-array (mapcar 'org-json-format-generic value)))
 
 (defun format-secondary-string (value)
-  "Format the \"secondary string\" property VALUE, which as far as I can tell is
-either a single string or list of strings or other types.
+  "Format the \"secondary string\" property VALUE.
 
-Always return an array for this."
+As far as I can tell a secondary string is either a single string or list of
+strings or other types. Always returns an array."
   (format-list-generic (if (stringp value) (list value) value)))
 
 
@@ -518,7 +518,7 @@ Returns a hash table."
 (defun -get-agenda-lines ()
   "Get the lines of org-agenda buffer (must be current buffer) which correspond to agenda items.
 
-  Code is derived from the org-batch-agenda-csv function."
+  Code is derived from the `org-batch-agenda-csv' function."
   (seq-filter
     (lambda (line) (get-text-property 0 'org-category line))
     (org-split-string (buffer-string) "\n")))
@@ -527,12 +527,12 @@ Returns a hash table."
 (defun -agenda-info-from-line (line)
   "Get plist of org agenda info from line of agenda buffer (returned by `org-json--get-agenda-lines')
 
-  Code is derived from the `org-batch-agenda-csv' function."
+Code is derived from the `org-batch-agenda-csv' function."
   (org-fix-agenda-info (text-properties-at 0 line)))
 
 
 (defun -headline-at-point ()
-  "Like org-element-at-point but parse objects in headline's :title property."
+  "Like `org-element-at-point' but parse objects in headline's :title property."
   (let* ((elem (org-element-at-point))
        (eltype (org-element-type elem))
        (title (org-element-property :title elem)))
