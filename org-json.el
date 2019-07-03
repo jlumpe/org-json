@@ -7,7 +7,7 @@
 ;; Keywords: outlines
 ;; Homepage: https://github.com/jlumpe/org-json
 
-;; Package-Requires: ((emacs "25") (seq "2.2") (org "9"))
+;; Package-Requires: ((emacs "25") (seq "2.2") (org "9") names)
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -71,6 +71,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'names))
+
 (require 'cl-lib)
 (require 'org)
 (require 'org-element)
@@ -78,16 +80,20 @@
 (require 'json)
 
 
+;;; Begin namespace
+(define-namespace org-json-
+
+
 ;;; Variables
 (defgroup org-json nil "Customization for the org-json package" :group 'outline)
 
-(defcustom org-json-data-type-property "$$data_type"
+(defcustom data-type-property "$$data_type"
   "Property which indicates the data type of exported objects.
 
 Set to nil to disable."
   :type '(string))
 
-(defcustom org-json-property-formatters-plist
+(defcustom property-formatters-plist
   '(
     bool             org-json-format-bool
     string           org-json-format-string
@@ -107,7 +113,7 @@ format the data to a value that can be passed to the `json-encode' function."
   :type '(plist :value-type symbol)
   :group 'org-json)
 
-(defcustom org-json-node-property-types-plist
+(defcustom node-property-types-plist
   '(
     all (
       ; Never include parent, leads to infinite recursion
@@ -170,7 +176,7 @@ means the property will be skipped."
   :type '(plist :value-type (plist :value-type symbol))
   :group 'org-json)
 
-(defcustom org-json-agenda-property-types-plist
+(defcustom agenda-property-types-plist
   '(
     agenda-day                 string
     breadcrumbs                string
@@ -222,7 +228,7 @@ will be skipped."
 
 ;;; Utility code
 
-(defun org-json--plist-get-keys (plist)
+(defun -plist-get-keys (plist)
   "Get a list of the keys in plist PLIST.
 
 How is this not part of the standard library?"
@@ -230,15 +236,15 @@ How is this not part of the standard library?"
     for i from 0 to (- (length plist) 1) by 2
     collect (nth i plist)))
 
-(defun org-json--hash-table-empty-p (table)
+(defun -hash-table-empty-p (table)
 	"Check whether a hash table is empty."
 	(zerop (hash-table-count table)))
 
-(defun org-json--plist-get-default (plist key default)
+(defun -plist-get-default (plist key default)
   "Get value from plist or default if key is not present."
   (if (plist-member plist key) (plist-get plist key) default))
 
-(defun org-json--make-object-hash (&optional data-type)
+(defun -make-object-hash (&optional data-type)
   "Create a hash table to store data for a JSON object.
 
   DATA-TYPE is a string indicating how the object data should be interpreted,
@@ -250,28 +256,28 @@ How is this not part of the standard library?"
   This function should be used for all data to be converted into a JSON object
   because json-encode will always handle it correctly even if empty."
   (let ((objhash (make-hash-table :test 'equal)))
-    (when (and org-json-data-type-property data-type)
-      (puthash org-json-data-type-property data-type objhash))
+    (when (and data-type-property data-type)
+      (puthash data-type-property data-type objhash))
     objhash))
 
 
 ;;; Formatting generic values for JSON encoding
 
-(defun org-json-format-array (value)
+(defun format-array (value)
   "Convert a list or sequence VALUE into a format to be passed to `json-encode'.
 
 Needs to convert nil into something that will be encoded as an empty
 array, not null."
   (vconcat value nil))
 
-(defun org-json-format-bool (value)
+(defun format-bool (value)
   "Convert boolean VALUE into a format to be passed to `json-encode'.
 
   Needs to convert nil into something that will be encoded as false
   instead of null."
   (if value t json-false))
 
-(defun org-json-format-string (value)
+(defun format-string (value)
   "Convert the string VALUE into a format to be passed to `json-encode'.
 
 If value is a string, strip properties (don't know if that matters for JSON
@@ -287,33 +293,33 @@ return its name. If nil return nil. Otherwise throw an error."
     (t
       (error "Expected string value or nil, got %s" (type-of value)))))
 
-(defun org-json-format-number (value)
+(defun format-number (value)
   "Convert the number VALUE into a format to be passed to `json-encode'."
   (if (or (not value) (numberp value))
     value
     (error "Expected numeric value or nil, got %s" (type-of value))))
 
-(defun org-json-format-timestamp (elem)
+(defun format-timestamp (elem)
   "Convert the timestamp elem ELEM a value to be passed to `json-encode'."
-  (if elem (org-json-format-node elem) nil))
+  (if elem (format-node elem) nil))
 
-(defun org-json-format-plist (value)
+(defun format-plist (value)
   "Convert a property list VALUE into a format to be passed to `json-encode'."
-  (let ((objhash (org-json--make-object-hash "mapping")))
-    (dolist (property (org-json--plist-get-keys value))
-      (puthash property (org-json-format-generic (plist-get property value)) objhash))
+  (let ((objhash (-make-object-hash "mapping")))
+    (dolist (property (-plist-get-keys value))
+      (puthash property (format-generic (plist-get property value)) objhash))
     objhash))
 
-(defun org-json-format-alist (value)
+(defun format-alist (value)
   "Convert the alist VALUE into a format to be passed to `json-encode'."
-  (let ((objhash (org-json--make-object-hash "mapping")))
+  (let ((objhash (-make-object-hash "mapping")))
     (dolist (pair value)
       ; Should be a cons cell, skip otherwise
       (when (consp pair)
-        (puthash (car pair) (org-json-format-generic (cdr pair)) objhash)))
+        (puthash (car pair) (format-generic (cdr pair)) objhash)))
     objhash))
 
-(defun org-json-format-generic (value &optional strict)
+(defun format-generic (value &optional strict)
   "Format generic value for JSON output when the type is not known in advance.
 
 VALUE is a bool, number, symbol, string, or org element/object. nil is treated
@@ -325,33 +331,33 @@ or an error otherwise."
     ((numberp value) value)
     ((symbolp value) value)
     ((stringp value)
-      (org-json-format-string value))
+      (format-string value))
     ; An org AST node
     ((org-element-type value)
-      (org-json-format-node value))
+      (format-node value))
     ; Don't try to automatically encode lists because the actual data type
     ; is too ambiguous (damn elisp).
-    (t (org-json--maybe-error strict "Couldn't automatically encode value of type %s" (type-of value)))))
+    (t (-maybe-error strict "Couldn't automatically encode value of type %s" (type-of value)))))
 
-(defun org-json-format-list-generic (value)
+(defun format-list-generic (value)
   "Map `org-json-format-generic' over a list VALUE and return a vector."
-  (org-json-format-array (mapcar 'org-json-format-generic value)))
+  (format-array (mapcar 'org-json-format-generic value)))
 
-(defun org-json-format-secondary-string (value)
+(defun format-secondary-string (value)
   "Format the \"secondary string\" property VALUE, which as far as I can tell is
 either a single string or list of strings or other types.
 
 Always return an array for this."
-  (org-json-format-list-generic (if (stringp value) (list value) value)))
+  (format-list-generic (if (stringp value) (list value) value)))
 
 
-(defun org-json--format-src-block-parameters (parameters)
+(defun -format-src-block-parameters (parameters)
   "Special case formatter for :parameters property of src-block element.
 
 This is an alist with some information that would be useful to exporters trying
 to convert the data to another format (specifically the :export key)."
   (let ((parsed (org-babel-parse-header-arguments parameters))
-        (objhash (org-json--make-object-hash "mapping"))
+        (objhash (-make-object-hash "mapping"))
         (key nil)
         (val nil)
         (varlist nil))
@@ -369,26 +375,26 @@ to convert the data to another format (specifically the :export key)."
             (puthash key val objhash))
           ; List of strings
           (when (listp val)
-            (puthash key (org-json-format-array val) objhash)))
+            (puthash key (format-array val) objhash)))
         ))
-    (puthash :var (org-json-format-array varlist) objhash)
+    (puthash :var (format-array varlist) objhash)
   objhash))
 
 
-(defun org-json--make-error (message &rest objects)
+(defun -make-error (message &rest objects)
   "Make a JSON object with an error message"
-  (let ((errobj (org-json--make-object-hash "error")))
+  (let ((errobj (-make-object-hash "error")))
     (puthash 'message (apply `format message objects) errobj)
     errobj))
 
-(defun org-json--maybe-error (strict message &rest objects)
+(defun -maybe-error (strict message &rest objects)
   "Throw an actual error if strict is non-nil, else return a JSON error object."
   (if strict
     (apply 'error message objects)
-    (apply 'org-json--make-error message objects)))
+    (apply '-make-error message objects)))
 
 
-(defun org-json--format-property-values (properties property-types &rest options)
+(defun -format-property-values (properties property-types &rest options)
   "Format property values based on their types.
 
 PROPERTIES is a property plist. PROPERTY-TYPES is a plist mapping property keys
@@ -405,15 +411,15 @@ properties with a type of nil will always be skipped.
 :default-formatter - Default formatter function name for keys not in PROPERTY-TYPES.
 
 Returns a hash table."
-  (let ((output (org-json--make-object-hash "mapping"))
-        (keys (org-json--plist-get-default options :keys (org-json--plist-get-keys properties)))
-        (formatters (org-json--plist-get-default options :formatters org-json-property-formatters-plist))
+  (let ((output (-make-object-hash "mapping"))
+        (keys (-plist-get-default options :keys (-plist-get-keys properties)))
+        (formatters (-plist-get-default options :formatters property-formatters-plist))
         (default-type (plist-get options :default-type))
         (default-formatter (plist-get options :default-formatter)))
     (dolist (key keys)
       (let* ((value (plist-get properties key))
-             (proptype (org-json--plist-get-default property-types key default-type))
-             (formatter (org-json--plist-get-default formatters proptype default-formatter)))
+             (proptype (-plist-get-default property-types key default-type))
+             (formatter (-plist-get-default formatters proptype default-formatter)))
         (catch 'skipprop
           ;; Key not present in property plist, skip
           (unless (plist-member properties key)
@@ -434,82 +440,82 @@ Returns a hash table."
 ;;; Encode org AST nodes
 
 
-(defun org-json--get-node-properties-plist (node)
+(defun -get-node-properties-plist (node)
   "Get a plist of all properties for an AST node."
   (nth 1 node))
 
 
-;; (defun org-json--get-property-type (eltype property)
 ;;   "Get the type of a property from org-json-node-property-types-plist by node type and property name."
+;; (defun -get-property-type (eltype property)
 ;;   (catch 'proptype
 ;;     (dolist (proptypes (list
-;;                  (plist-get org-json-node-property-types-plist eltype)
-;;                  (plist-get org-json-node-property-types-plist 'all)))
+;;                  (plist-get node-property-types-plist eltype)
+;;                  (plist-get node-property-types-plist 'all)))
 ;;       (if (plist-member proptypes property)
 ;;         (throw 'proptype (plist-get proptypes property))))
 ;;     nil))
 
-(defun org-json--get-node-property-types (eltype)
+(defun -get-node-property-types (eltype)
   "Get plist of property types for a given org node type."
   (org-combine-plists
-    (plist-get org-json-node-property-types-plist 'all)
-    (plist-get org-json-node-property-types-plist eltype)))
+    (plist-get node-property-types-plist 'all)
+    (plist-get node-property-types-plist eltype)))
 
 
-(defun org-json--format-node-properties (node)
-  (org-json--format-property-values
-    (org-json--get-node-properties-plist node)
-    (org-json--get-node-property-types (org-element-type node))
-    ;; :keys (org-json--list-node-properties node)
+(defun -format-node-properties (node)
+  (-format-property-values
+    (-get-node-properties-plist node)
+    (-get-node-property-types (org-element-type node))
+    ;; :keys (-list-node-properties node)
     :default-formatter 'org-json-format-generic))
 
 
-(defun org-json-format-node (node)
+(defun format-node (node)
   "Transform org mode element/object NODE into a format that can be passed to `json-encode'."
   (let ((node-type (org-element-type node))
-        (keywords (org-json--make-object-hash "mapping"))
+        (keywords (-make-object-hash "mapping"))
         (contents nil)
-        (formatted (org-json--make-object-hash "org-node")))
+        (formatted (-make-object-hash "org-node")))
     ;; Iterate over contents
     (dolist (item (org-element-contents node))
       (if (equal (org-element-type item) 'keyword)
         ;; Intercept keyword nodes and add to hash
         (puthash
           (org-element-property :key item)
-          (org-json-format-generic (org-element-property :value item))
+          (format-generic (org-element-property :value item))
           keywords)
         ;; Otherwise add to contents list
         (push item contents)))
     (puthash 'type node-type formatted)
-    (puthash 'properties (org-json--format-node-properties node) formatted)
-    (puthash 'contents (org-json-format-list-generic (reverse contents)) formatted)
-    (unless (org-json--hash-table-empty-p keywords)
+    (puthash 'properties (-format-node-properties node) formatted)
+    (puthash 'contents (format-list-generic (reverse contents)) formatted)
+    (unless (-hash-table-empty-p keywords)
       (puthash 'keywords keywords formatted))
     formatted))
 
 
-(defun org-json-encode-node (node)
+(defun encode-node (node)
   "Encode an org mode element/object NODE into a JSON string."
-  (json-encode (org-json-format-node node)))
+  (json-encode (format-node node)))
 
 
-(defun org-json-encode-buffer ()
+(defun encode-buffer ()
   "Encode the current org mode buffer into a JSON string."
-  (org-json-encode-node (org-element-parse-buffer)))
+  (encode-node (org-element-parse-buffer)))
 
 
-(defun org-json-export-buffer ()
+(defun export-buffer ()
   "Export current org mode buffer to JSON file."
   (interactive)
   (let* ((default-filename (concat (file-name-nondirectory (buffer-file-name)) ".json"))
        (filename (read-file-name "Export org file to JSON: " nil nil nil default-filename 'identity)))
-    (write-region (org-json-encode-buffer) nil filename)))
+    (write-region (encode-buffer) nil filename)))
 
 
 ;;; Agenda
 
 
-(defun org-json--get-agenda-lines ()
+(defun -get-agenda-lines ()
   "Get the lines of org-agenda buffer (must be current buffer) which correspond to agenda items.
 
   Code is derived from the org-batch-agenda-csv function."
@@ -518,14 +524,14 @@ Returns a hash table."
     (org-split-string (buffer-string) "\n")))
 
 
-(defun org-json--agenda-info-from-line (line)
+(defun -agenda-info-from-line (line)
   "Get plist of org agenda info from line of agenda buffer (returned by `org-json--get-agenda-lines')
 
   Code is derived from the `org-batch-agenda-csv' function."
   (org-fix-agenda-info (text-properties-at 0 line)))
 
 
-(defun org-json--headline-at-point ()
+(defun -headline-at-point ()
   "Like org-element-at-point but parse objects in headline's :title property."
   (let* ((elem (org-element-at-point))
        (eltype (org-element-type elem))
@@ -537,15 +543,15 @@ Returns a hash table."
     elem))
 
 
-(defun org-json-format-agenda-info (info)
+(defun format-agenda-info (info)
   "Transform agenda item info into a format that can be passed to `json-encode'.
 
 INFO is the plist returned by `org-fix-agenda-info'."
   (let* ((formatted
-            (org-json--format-property-values
+            (-format-property-values
               info
-              org-json-agenda-property-types-plist
-              :keys (org-json--plist-get-keys org-json-agenda-property-types-plist)))
+              agenda-property-types-plist
+              :keys (-plist-get-keys agenda-property-types-plist)))
          (marker (plist-get info 'org-hd-marker))
          (info-file (buffer-file-name (marker-buffer marker)))
          (headline nil)
@@ -554,25 +560,25 @@ INFO is the plist returned by `org-fix-agenda-info'."
     (puthash 'file-relative (file-relative-name info-file org-directory) formatted)
     (org-with-point-at marker
       (org-with-wide-buffer
-        (setq headline (org-json--headline-at-point))
+        (setq headline (-headline-at-point))
         (setq deadline (org-element-property :deadline headline))
-        (puthash 'node (org-json-format-node headline) formatted)
-        (puthash 'deadline (if deadline (org-json-format-node deadline)) formatted)
-        (puthash 'path (org-json-format-array (org-get-outline-path t)) formatted)
+        (puthash 'node (format-node headline) formatted)
+        (puthash 'deadline (if deadline (format-node deadline)) formatted)
+        (puthash 'path (format-array (org-get-outline-path t)) formatted)
         ))
     formatted))
 
 
-(defun org-json-encode-agenda-buffer ()
+(defun encode-agenda-buffer ()
   "Encode the current agenda buffer as JSON."
   (json-encode
-    (org-json-format-array
+    (format-array
       (mapcar
-        (lambda (line) (org-json-format-agenda-info (org-json--agenda-info-from-line line)))
-        (org-json--get-agenda-lines)))))
+        (lambda (line) (format-agenda-info (-agenda-info-from-line line)))
+        (-get-agenda-lines)))))
 
 
-(defmacro org-json-with-agenda-buffer (options &rest body)
+(defmacro with-agenda-buffer (options &rest body)
   "Create a temporary agenda buffer and evaluate forms in BODY within it.
 
 OPTIONS must be either a CMD-KEY string or a list of (CMD-KEY[, PARAMETERS]),
@@ -603,6 +609,10 @@ where CMD-KEY and PARAMETERS are the arguments to `org-batch-agenda'."
          ; (set-buffer org-agenda-buffer-name)
          ; (princ (buffer-string)))
          ,@body))))
+
+
+;;; End of namespace
+)
 
 
 (provide 'org-json)
