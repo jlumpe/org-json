@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/jlumpe/org-json.svg?branch=master)](https://travis-ci.org/jlumpe/org-json)
 
-**Don't use this package, its been replaced with [ox-json](github.com/jlumpe/ox-json).**
+**Don't use this package, its been replaced with [ox-json](http://github.com/jlumpe/ox-json).**
 
 This package is for encoding all or part of an Org mode file's Abstract Syntax
 Tree (AST) into JSON format so that it can be read by other tools.
